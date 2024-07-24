@@ -1,0 +1,126 @@
+<!-- livebook:{"autosave_interval_s":60} -->
+
+# GPT
+
+```elixir
+Mix.install([
+  {:axon, ">= 0.5.0"},
+  {:kino, ">= 0.9.0"}
+])
+```
+
+## Tokenizer
+
+```elixir
+text = File.read!("input.txt")
+```
+
+```elixir
+chars =
+  text
+  |> to_charlist()
+  |> MapSet.new()
+  |> MapSet.to_list()
+  |> Enum.sort()
+
+vocab_size = chars |> length()
+```
+
+```elixir
+stoi =
+  chars
+  |> Enum.with_index()
+  |> Map.new()
+
+itos =
+  chars
+  |> Enum.with_index()
+  |> Map.new(fn {c, i} -> {i, c} end)
+
+encode = fn string ->
+  string
+  |> to_charlist()
+  |> Enum.map(fn c -> stoi[c] end)
+end
+
+decode = fn list ->
+  list
+  |> Enum.map(fn l -> itos[l] end)
+  |> to_string()
+end
+
+encode.("hii there") |> IO.inspect()
+encode.("hii there") |> decode.()
+```
+
+```elixir
+data =
+  text
+  |> encode.()
+  |> Nx.tensor()
+
+Nx.shape(data) |> IO.inspect()
+Nx.type(data) |> IO.inspect()
+
+data[0..1000] |> IO.inspect()
+```
+
+```elixir
+size = Nx.size(data)
+n = 0.9 * size |> round()
+train_data = data[0..n]
+val_data = data[n..size - 1]
+```
+
+## Data loader
+
+```elixir
+block_size = 8
+train_data[0..block_size] # Elixir range is inclusive
+```
+
+```elixir
+x = train_data[0..(block_size - 1)]
+y = train_data[1..block_size]
+
+0..(block_size - 1)
+|> Enum.each(fn t ->
+  context = x[0..t] |> Nx.to_flat_list()
+  target = y[t] |> Nx.to_number()
+  IO.puts("when input is #{inspect(context)} -- target: #{target}")
+end)
+```
+
+```elixir
+key = Nx.Random.key(1337)
+
+batch_size = 4
+block_size = 8
+
+get_batch = fn split ->
+  data = if split == "train", do: train_data, else: val_data
+  {ix, _new_key} = Nx.Random.randint(key, 0, Nx.size(data) - block_size, shape: {batch_size})
+  x =
+    Nx.to_list(ix)
+    |> Enum.map(fn i ->
+      data[i..(i + block_size - 1)]
+    end)
+    |> Nx.stack()
+  y =
+    Nx.to_list(ix)
+    |> Enum.map(fn i ->
+      data[(i + 1)..(i + block_size)]
+    end)
+    |> Nx.stack()
+  
+  {x, y}
+end
+
+{xb, yb} = get_batch.("train")
+IO.puts("inputs")
+Nx.shape(xb) |> IO.inspect(label: "xb shape")
+xb |> IO.inspect()
+IO.puts("targets")
+Nx.shape(yb) |> IO.inspect(label: "yb shape")
+yb |> IO.inspect()
+```
