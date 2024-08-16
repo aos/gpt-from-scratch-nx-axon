@@ -76,15 +76,15 @@ shuffled_normalized_iris = DF.shuffle(normalized_iris)
 ```
 #Explorer.DataFrame<
   Polars[150 x 5]
-  sepal_length f64 [-0.1730940663922016, -0.4146206706603897, 1.276065559216926,
-   -1.2599637855990478, -1.0184371813308595, ...]
-  sepal_width f64 [-0.5858010433809365, -1.5083223715398915, 0.10608995273828045,
-   -0.12454037930145855, -1.7389527035796306, ...]
-  petal_length f64 [0.42015685431332234, 0.023426011661354478, 0.930239366294424,
-   -1.3367940202882493, -0.25995316166147964, ...]
-  petal_width f64 [0.13278111385485278, -0.12928687401656727, 1.1810530653405331,
-   -1.1775588255022478, -0.26032086795227743, ...]
-  species category ["Iris-versicolor", "Iris-versicolor", "Iris-virginica", "Iris-setosa",
+  sepal_length f64 [1.034538954948738, 0.6722490485464564, -0.2938573685262962, -1.0184371813308595,
+   0.6722490485464564, ...]
+  sepal_width f64 [0.5673506168177574, -0.8164313754206746, -0.12454037930145855,
+   -0.12454037930145855, -0.35517071134119754, ...]
+  petal_length f64 [1.1002668702881244, 0.8735635316298569, 0.19345351565505486,
+   -1.2234423509591155, 0.30680518498418863, ...]
+  petal_width f64 [1.1810530653405331, 0.9189850774691128, 0.13278111385485278, -1.308592819437958,
+   0.13278111385485278, ...]
+  species category ["Iris-virginica", "Iris-virginica", "Iris-versicolor", "Iris-setosa",
    "Iris-versicolor", ...]
 >
 ```
@@ -101,16 +101,16 @@ test_df = DF.slice(shuffled_normalized_iris, 120..149)
 ```
 #Explorer.DataFrame<
   Polars[30 x 5]
-  sepal_length f64 [-1.743016994135423, -0.7769105770626714, 0.5514857464123618, 1.034538954948738,
-   0.9137756528146435, ...]
-  sepal_width f64 [0.33672028477801946, 0.7979809488574964, 0.7979809488574964,
-   -0.12454037930145855, -0.35517071134119754, ...]
-  petal_length f64 [-1.393469854952816, -1.3367940202882493, 1.0435910356235572, 0.8168876969652903,
-   0.476832688977889, ...]
-  petal_width f64 [-1.308592819437958, -1.308592819437958, 1.574155047147663, 1.443121053211953,
-   0.13278111385485278, ...]
-  species category ["Iris-setosa", "Iris-setosa", "Iris-virginica", "Iris-virginica",
-   "Iris-versicolor", ...]
+  sepal_length f64 [-0.5353839727944832, 0.5514857464123618, -0.4146206706603897,
+   -0.1730940663922016, 1.5175921634851133, ...]
+  sepal_width f64 [1.9511326090561905, -0.35517071134119754, -1.2776920395001525,
+   -0.35517071134119754, -0.12454037930145855, ...]
+  petal_length f64 [-1.393469854952816, 1.0435910356235572, 0.13677768099048823,
+   0.25012935031962197, 1.213618539617258, ...]
+  petal_width f64 [-1.0465248315665376, 0.787951083533403, 0.13278111385485278, 0.13278111385485278,
+   1.1810530653405331, ...]
+  species category ["Iris-setosa", "Iris-virginica", "Iris-versicolor", "Iris-versicolor",
+   "Iris-virginica", ...]
 >
 ```
 
@@ -135,25 +135,25 @@ y_test =
 ```
 #Nx.Tensor<
   u8[30][3]
-  EXLA.Backend<host:0, 0.1238311329.617218062.110760>
+  EXLA.Backend<host:0, 0.404730399.4157734928.106801>
   [
     [1, 0, 0],
-    [1, 0, 0],
-    [0, 0, 1],
     [0, 0, 1],
     [0, 1, 0],
-    [0, 0, 1],
+    [0, 1, 0],
     [0, 0, 1],
     [0, 1, 0],
-    [1, 0, 0],
-    [0, 0, 1],
+    [0, 1, 0],
     [0, 1, 0],
     [1, 0, 0],
-    [0, 0, 1],
-    [0, 0, 1],
+    [0, 1, 0],
     [1, 0, 0],
     [1, 0, 0],
-    [0, 1, ...],
+    [0, 1, 0],
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 1, 0],
+    [0, 0, ...],
     ...
   ]
 >
@@ -185,11 +185,11 @@ Axon.Display.as_graph(model, Nx.template({1, 4}, :f32))
 
 ```mermaid
 graph TD;
-11[/"iris_features (:input) {1, 4}"/];
-12["dense_0 (:dense) {1, 3}"];
-13["softmax_0 (:softmax) {1, 3}"];
-12 --> 13;
-11 --> 12;
+3[/"iris_features (:input) {1, 4}"/];
+4["dense_0 (:dense) {1, 3}"];
+5["softmax_0 (:softmax) {1, 3}"];
+4 --> 5;
+3 --> 4;
 ```
 
 ```elixir
@@ -215,16 +215,16 @@ trained_model_state =
 <!-- livebook:{"output":true} -->
 
 ```
-Epoch: 0, Batch: 450, accuracy: 0.6743901 loss: 0.6817619
-Epoch: 1, Batch: 450, accuracy: 0.8631388 loss: 0.5356821
-Epoch: 2, Batch: 450, accuracy: 0.8858806 loss: 0.4665579
-Epoch: 3, Batch: 450, accuracy: 0.9036919 loss: 0.4224834
-Epoch: 4, Batch: 450, accuracy: 0.9132831 loss: 0.3904390
-Epoch: 5, Batch: 450, accuracy: 0.9210606 loss: 0.3654577
-Epoch: 6, Batch: 450, accuracy: 0.9331250 loss: 0.3451358
-Epoch: 7, Batch: 450, accuracy: 0.9382725 loss: 0.3281208
-Epoch: 8, Batch: 450, accuracy: 0.9416718 loss: 0.3135722
-Epoch: 9, Batch: 450, accuracy: 0.9461423 loss: 0.3009307
+Epoch: 0, Batch: 450, accuracy: 0.7633420 loss: 0.5856346
+Epoch: 1, Batch: 450, accuracy: 0.8728564 loss: 0.4790678
+Epoch: 2, Batch: 450, accuracy: 0.9022680 loss: 0.4239457
+Epoch: 3, Batch: 450, accuracy: 0.9210434 loss: 0.3870227
+Epoch: 4, Batch: 450, accuracy: 0.9294854 loss: 0.3593586
+Epoch: 5, Batch: 450, accuracy: 0.9410434 loss: 0.3373489
+Epoch: 6, Batch: 450, accuracy: 0.9500036 loss: 0.3191761
+Epoch: 7, Batch: 450, accuracy: 0.9647833 loss: 0.3037850
+Epoch: 8, Batch: 450, accuracy: 0.9666680 loss: 0.2905047
+Epoch: 9, Batch: 450, accuracy: 0.9666680 loss: 0.2788791
 ```
 
 <!-- livebook:{"output":true} -->
@@ -234,17 +234,17 @@ Epoch: 9, Batch: 450, accuracy: 0.9461423 loss: 0.3009307
   "dense_0" => %{
     "bias" => #Nx.Tensor<
       f32[3]
-      EXLA.Backend<host:0, 0.1238311329.617480206.124198>
-      [-0.612989068031311, 1.4229717254638672, -0.8099834322929382]
+      EXLA.Backend<host:0, 0.404730399.4157997072.120239>
+      [-0.4647390842437744, 1.4837983846664429, -1.0190598964691162]
     >,
     "kernel" => #Nx.Tensor<
       f32[4][3]
-      EXLA.Backend<host:0, 0.1238311329.617480206.124200>
+      EXLA.Backend<host:0, 0.404730399.4157997072.120241>
       [
-        [0.9415335655212402, -0.8026963472366333, -0.6167795062065125],
-        [-1.4157358407974243, 0.5756758451461792, 0.4771430492401123],
-        [-0.7598090767860413, -0.2378181517124176, 1.191028356552124],
-        [-2.0265846252441406, -0.3499256670475006, 2.4322123527526855]
+        [1.6253658533096313, -0.01217042375355959, -0.06273072957992554],
+        [-1.579866647720337, 0.12189440429210663, 0.03884674236178398],
+        [-1.104160189628601, 0.33422940969467163, 1.7301753759384155],
+        [-2.0964274406433105, -1.1392054557800293, 1.9616782665252686]
       ]
     >
   }
@@ -263,7 +263,7 @@ model
 <!-- livebook:{"output":true} -->
 
 ```
-Batch: 0, accuracy: 0.9666666
+Batch: 0, accuracy: 0.9333333
 ```
 
 <!-- livebook:{"output":true} -->
@@ -273,8 +273,8 @@ Batch: 0, accuracy: 0.9666666
   0 => %{
     "accuracy" => #Nx.Tensor<
       f32
-      EXLA.Backend<host:0, 0.1238311329.617480206.124252>
-      0.9666666388511658
+      EXLA.Backend<host:0, 0.404730399.4157997072.120293>
+      0.9333333373069763
     >
   }
 }
@@ -291,7 +291,7 @@ a = Nx.tensor([1, 2, 3])
 ```
 #Nx.Tensor<
   s64[3]
-  EXLA.Backend<host:0, 0.1238311329.617218073.213240>
+  EXLA.Backend<host:0, 0.404730399.4157734934.207441>
   [1, 2, 3]
 >
 ```
@@ -307,7 +307,7 @@ a
 ```
 #Nx.Tensor<
   f32[1][3][1]
-  EXLA.Backend<host:0, 0.1238311329.617480206.124256>
+  EXLA.Backend<host:0, 0.404730399.4157997072.120297>
   [
     [
       [1.0],
@@ -328,7 +328,7 @@ Nx.abs(a)
 ```
 #Nx.Tensor<
   s64[2][2][3]
-  EXLA.Backend<host:0, 0.1238311329.617480206.124258>
+  EXLA.Backend<host:0, 0.404730399.4157997072.120299>
   [
     [
       [1, 2, 3],
@@ -353,7 +353,7 @@ Nx.add(one, b)
 ```
 #Nx.Tensor<
   s64[2][3]
-  EXLA.Backend<host:0, 0.1238311329.617480206.124260>
+  EXLA.Backend<host:0, 0.404730399.4157997072.120301>
   [
     [5, 7, 9],
     [8, 10, 12]
@@ -381,7 +381,7 @@ Nx.sum(revs, axes: [:month])
 ```
 #Nx.Tensor<
   s64[year: 4]
-  EXLA.Backend<host:0, 0.1238311329.617480206.124264>
+  EXLA.Backend<host:0, 0.404730399.4157997072.120305>
   [705, 711, 731, 766]
 >
 ```
@@ -417,7 +417,7 @@ MyModule.adds_one(Nx.tensor([1, 2, 3]))
 ```
 #Nx.Tensor<
   s64[3]
-  EXLA.Backend<host:0, 0.1238311329.617480206.124266>
+  EXLA.Backend<host:0, 0.404730399.4157997072.120307>
   [2, 3, 4]
 >
 ```
@@ -481,12 +481,12 @@ Calculating statistics...
 Formatting results...
 
 Name                     ips        average  deviation         median         99th %
-JIT with EXLA         497.44        2.01 ms    ±40.09%        1.86 ms        4.80 ms
-Regular Elixir        319.32        3.13 ms    ±22.12%        3.07 ms        4.85 ms
+JIT with EXLA         241.32        4.14 ms    ±31.40%        4.46 ms        7.26 ms
+Regular Elixir        162.54        6.15 ms    ±32.28%        6.67 ms       10.06 ms
 
 Comparison: 
-JIT with EXLA         497.44
-Regular Elixir        319.32 - 1.56x slower +1.12 ms
+JIT with EXLA         241.32
+Regular Elixir        162.54 - 1.48x slower +2.01 ms
 ```
 
 <!-- livebook:{"output":true} -->
@@ -540,25 +540,25 @@ Regular Elixir        319.32 - 1.56x slower +1.12 ms
       tag: nil,
       run_time_data: %Benchee.CollectionData{
         statistics: %Benchee.Statistics{
-          average: 2010294.280048319,
-          ips: 497.4396086805581,
-          std_dev: 805853.0265845376,
-          std_dev_ratio: 0.40086321419825577,
-          std_dev_ips: 199.4052404052111,
-          median: 1859294.0,
-          percentiles: %{50 => 1859294.0, 99 => 4795644.839999994},
-          mode: [1726589, 2144968, 1680896, 1656588, 2110377, 1705324, 1616323, 2038088],
-          minimum: 1253494,
-          maximum: 19774998,
+          average: 4143874.914487339,
+          ips: 241.32002549206177,
+          std_dev: 1301075.4828641575,
+          std_dev_ratio: 0.3139755686918751,
+          std_dev_ips: 75.76859224060789,
+          median: 4455138.0,
+          percentiles: %{50 => 4455138.0, 99 => 7257479.9},
+          mode: 4758006,
+          minimum: 1715276,
+          maximum: 9537502,
           relative_more: nil,
           relative_less: nil,
           absolute_difference: nil,
-          sample_size: 4967
+          sample_size: 2409
         },
-        samples: [3006409, 2331760, 2085859, 1957313, 1810949, 1730753, 2028799, 1866309, 2105575,
-         2255868, 2375258, 1894774, 1616304, 2022005, 1724842, 1835993, 1840542, 2428931, 2234219,
-         1804917, 1889844, 1712039, 1926649, 1820568, 1628372, 1642286, 2591671, 1947911, 1609194,
-         2232804, 1636555, 1974073, 1772636, ...]
+        samples: [5878157, 5123071, 5200743, 5653940, 5626811, 4594485, 6308823, 5515097, 4159323,
+         3982991, 6496698, 4496988, 4062025, 6068994, 5156476, 5030424, 4743552, 5126933, 4567487,
+         4612247, 4929791, 4247959, 4949838, 5680356, 4826192, 3999811, 5919070, 4662010, 4763587,
+         6060343, 4843473, 5591734, 5411254, ...]
       },
       memory_usage_data: %Benchee.CollectionData{
         statistics: %Benchee.Statistics{
@@ -612,25 +612,25 @@ Regular Elixir        319.32 - 1.56x slower +1.12 ms
       tag: nil,
       run_time_data: %Benchee.CollectionData{
         statistics: %Benchee.Statistics{
-          average: 3131638.5732204453,
-          ips: 319.3216511481534,
-          std_dev: 692828.8162897641,
-          std_dev_ratio: 0.22123524158066815,
-          std_dev_ips: 70.64520263369957,
-          median: 3070773.0,
-          percentiles: %{50 => 3070773.0, 99 => 4846052.599999999},
-          mode: [3110004, 2411777],
-          minimum: 1783843,
-          maximum: 21785753,
-          relative_more: 1.5578010663917194,
-          relative_less: 0.6419304887987176,
-          absolute_difference: 1121344.2931721264,
-          sample_size: 3189
+          average: 6152144.851600985,
+          ips: 162.5449374358876,
+          std_dev: 1986061.4982939912,
+          std_dev_ratio: 0.32282424198402193,
+          std_dev_ips: 52.47344621608068,
+          median: 6666771.0,
+          percentiles: %{50 => 6666771.0, 99 => 10063235.5},
+          mode: nil,
+          minimum: 2387871,
+          maximum: 12877379,
+          relative_more: 1.4846357524192064,
+          relative_less: 0.6735658887174886,
+          absolute_difference: 2008269.937113646,
+          sample_size: 1624
         },
-        samples: [3379566, 2718653, 2621763, 3476793, 3976504, 2871437, 2794727, 3301846, 2777753,
-         4078658, 2897881, 3267108, 2723214, 2506856, 3431540, 3429361, 2803172, 3098173, 2739236,
-         2464116, 4160648, 3678226, 3016985, 2839468, 2792811, 3390967, 3782243, 3326015, 2750915,
-         3108083, 5225714, 3099072, ...]
+        samples: [7750460, 7734442, 6799669, 8174030, 7391488, 8439516, 6231513, 7173145, 7095118,
+         6890719, 6451251, 7593149, 8150747, 7895426, 7372188, 7304645, 6524234, 7343369, 6125333,
+         6924400, 6555484, 6091184, 8152587, 6012358, 7070334, 7347535, 6804118, 6490144, 6240380,
+         7197606, 6586890, 7127830, ...]
       },
       memory_usage_data: %Benchee.CollectionData{
         statistics: %Benchee.Statistics{
@@ -686,7 +686,7 @@ Nx.add(Nx.iota({2, 2, 2}), Nx.iota({2, 2}))
 ```
 #Nx.Tensor<
   s64[2][2][2]
-  EXLA.Backend<host:0, 0.1238311329.617480206.145823>
+  EXLA.Backend<host:0, 0.404730399.4157997072.131517>
   [
     [
       [0, 2],
@@ -712,7 +712,7 @@ Nx.dot(r, s)
 ```
 #Nx.Tensor<
   s64[2][2][3]
-  EXLA.Backend<host:0, 0.1238311329.617480206.145832>
+  EXLA.Backend<host:0, 0.404730399.4157997072.131519>
   [
     [
       [0, 1, 2],
@@ -726,7 +726,7 @@ Nx.dot(r, s)
 >
 #Nx.Tensor<
   s64[3][2]
-  EXLA.Backend<host:0, 0.1238311329.617480206.145833>
+  EXLA.Backend<host:0, 0.404730399.4157997072.131521>
   [
     [0, 1],
     [2, 3],
@@ -740,7 +740,7 @@ Nx.dot(r, s)
 ```
 #Nx.Tensor<
   s64[2][2][2]
-  EXLA.Backend<host:0, 0.1238311329.617480206.145834>
+  EXLA.Backend<host:0, 0.404730399.4157997072.131523>
   [
     [
       [10, 13],
@@ -781,4 +781,185 @@ end
 
 ```
 [6, 49]
+```
+
+```elixir
+defmodule BerryFarm do
+  import Nx.Defn
+
+  defn profits(trees) do
+    -((trees - 1) ** 4) + (trees ** 3) + (trees ** 2)
+  end
+
+  defn profits_derivative(trees) do
+    grad(trees, &profits/1)
+  end
+end
+
+trees = Nx.linspace(0, 4, n: 100)
+profits = BerryFarm.profits(trees)
+profits_derivative = BerryFarm.profits_derivative(trees)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+#Nx.Tensor<
+  f32[100]
+  EXLA.Backend<host:0, 0.404730399.4157997072.186828>
+  [4.0, 3.620183229446411, 3.287757396697998, 3.001140832901001, 2.7587499618530273, 2.5590012073516846, 2.4003114700317383, 2.2810988426208496, 2.199779748916626, 2.154770851135254, 2.144489288330078, 2.1673526763916016, 2.2217769622802734, 2.3061797618865967, 2.418977975845337, 2.558588743209839, 2.723428726196289, 2.911914825439453, 3.122464418411255, 3.353494167327881, 3.603421211242676, 3.8706626892089844, 4.153635025024414, 4.450756072998047, 4.760441780090332, 5.081110000610352, 5.411177158355713, 5.749061107635498, 6.09317684173584, 6.441944122314453, 6.793778419494629, 7.147095680236816, 7.500314712524414, 7.8518524169921875, 8.200122833251953, 8.543547630310059, 8.88054084777832, 9.209519386291504, 9.528902053833008, 9.837104797363281, 10.13254165649414, 10.41363525390625, 10.678799629211426, 10.926450729370117, 11.155006408691406, 11.362886428833008, 11.548501968383789, 11.710275650024414, 11.846620559692383, 11.95595645904541, ...]
+>
+```
+
+```elixir
+alias VegaLite, as: Vl
+
+Vl.new(title: "Berry Profits", width: 480, height: 320)
+|> Vl.data_from_values(%{
+  trees: Nx.to_flat_list(trees),
+  profits: Nx.to_flat_list(profits),
+  profits_derivative: Nx.to_flat_list(profits_derivative)
+})
+|> Vl.layers([
+  Vl.new()
+  |> Vl.mark(:line, interpolate: :basis)
+  |> Vl.encode_field(:x, "trees", type: :quantitative)
+  |> Vl.encode_field(:y, "profits", type: :quantitative),
+
+  Vl.new()
+  |> Vl.mark(:line, interpolate: :basis)
+  |> Vl.encode_field(:x, "trees", type: :quantitative)
+  |> Vl.encode_field(:y, "profits_derivative", type: :quantitative)
+  |> Vl.encode(:color, value: "#ff0000")
+])
+
+```
+
+<!-- livebook:{"output":true} -->
+
+```vega-lite
+{"$schema":"https://vega.github.io/schema/vega-lite/v5.json","data":{"values":[{"profits":-1.0,"profits_derivative":4.0,"trees":0.0},{"profits":-0.8462191820144653,"profits_derivative":3.620183229446411,"trees":0.04040404036641121},{"profits":-0.706821620464325,"profits_derivative":3.287757396697998,"trees":0.08080808073282242},{"profits":-0.5799248218536377,"profits_derivative":3.001140832901001,"trees":0.12121212482452393},{"profits":-0.46370965242385864,"profits_derivative":2.7587499618530273,"trees":0.16161616146564484},{"profits":-0.3564212918281555,"profits_derivative":2.5590012073516846,"trees":0.20202019810676575},{"profits":-0.2563686668872833,"profits_derivative":2.4003114700317383,"trees":0.24242424964904785},{"profits":-0.16192500293254852,"profits_derivative":2.2810988426208496,"trees":0.28282827138900757},{"profits":-0.0715271383523941,"profits_derivative":2.199779748916626,"trees":0.3232323229312897},{"profits":0.01632404327392578,"profits_derivative":2.154770851135254,"trees":0.3636363744735718},{"profits":0.10306348651647568,"profits_derivative":2.144489288330078,"trees":0.4040403962135315},{"profits":0.19006246328353882,"profits_derivative":2.1673526763916016,"trees":0.4444444477558136},{"profits":0.2786282002925873,"profits_derivative":2.2217769622802734,"trees":0.4848484992980957},{"profits":0.37000375986099243,"profits_derivative":2.3061797618865967,"trees":0.5252525210380554},{"profits":0.46536850929260254,"profits_derivative":2.418977975845337,"trees":0.5656565427780151},{"profits":0.5658379197120667,"profits_derivative":2.558588743209839,"trees":0.6060606241226196},{"profits":0.6724629998207092,"profits_derivative":2.723428726196289,"trees":0.6464646458625793},{"profits":0.786231279373169,"profits_derivative":2.911914825439453,"trees":0.6868686676025391},{"profits":0.90806645154953,"profits_derivative":3.122464418411255,"trees":0.7272727489471436},{"profits":1.0388275384902954,"profits_derivative":3.353494167327881,"trees":0.7676767706871033},{"profits":1.1793103218078613,"profits_derivative":3.603421211242676,"trees":0.808080792427063},{"profits":1.3302464485168457,"profits_derivative":3.8706626892089844,"trees":0.8484848737716675},{"profits":1.4923030138015747,"profits_derivative":4.153635025024414,"trees":0.8888888955116272},{"profits":1.6660840511322021,"profits_derivative":4.450756072998047,"trees":0.9292929172515869},{"profits":1.8521294593811035,"profits_derivative":4.760441780090332,"trees":0.9696969985961914},{"profits":2.0509138107299805,"profits_derivative":5.081110000610352,"trees":1.0101009607315063},{"profits":2.262850522994995,"profits_derivative":5.411177158355713,"trees":1.0505050420761108},{"profits":2.4882864952087402,"profits_derivative":5.749061107635498,"trees":1.0909091234207153},{"profits":2.7275047302246094,"profits_derivative":6.09317684173584,"trees":1.1313130855560303},{"profits":2.980726718902588,"profits_derivative":6.441944122314453,"trees":1.1717171669006348},{"profits":3.24810791015625,"profits_derivative":6.793778419494629,"trees":1.2121212482452393},{"profits":3.5297389030456543,"profits_derivative":7.147095680236816,"trees":1.2525252103805542},{"profits":3.8256494998931885,"profits_derivative":7.500314712524414,"trees":1.2929292917251587},{"profits":4.135802745819092,"profits_derivative":7.8518524169921875,"trees":1.3333333730697632},{"profits":4.460097789764404,"profits_derivative":8.200122833251953,"trees":1.3737373352050781},{"profits":4.798373222351074,"profits_derivative":8.543547630310059,"trees":1.4141414165496826},{"profits":5.150400161743164,"profits_derivative":8.88054084777832,"trees":1.454545497894287},{"profits":5.5158843994140625,"profits_derivative":9.209519386291504,"trees":1.494949460029602},{"profits":5.894474029541016,"profits_derivative":9.528902053833008,"trees":1.5353535413742065},{"profits":6.285747528076172,"profits_derivative":9.837104797363281,"trees":1.575757622718811},{"profits":6.6892194747924805,"profits_derivative":10.13254165649414,"trees":1.616161584854126},{"profits":7.104344844818115,"profits_derivative":10.41363525390625,"trees":1.6565656661987305},{"profits":7.530511379241943,"profits_derivative":10.678799629211426,"trees":1.696969747543335},{"profits":7.967041969299316,"profits_derivative":10.926450729370117,"trees":1.73737370967865},{"profits":8.413199424743652,"profits_derivative":11.155006408691406,"trees":1.7777777910232544},{"profits":8.868179321289062,"profits_derivative":11.362886428833008,"trees":1.8181818723678589},{"profits":9.331111907958984,"profits_derivative":11.548501968383789,"trees":1.8585858345031738},{"profits":9.801070213317871,"profits_derivative":11.710275650024414,"trees":1.8989899158477783},{"profits":10.277055740356445,"profits_derivative":11.846620559692383,"trees":1.9393939971923828},{"profits":10.75800895690918,"profits_derivative":11.95595645904541,"trees":1.9797979593276978},{"profits":11.242805480957031,"profits_derivative":12.036697387695312,"trees":2.0202019214630127},{"profits":11.730262756347656,"profits_derivative":12.087263107299805,"trees":2.060606002807617},{"profits":12.219127655029297,"profits_derivative":12.106069564819336,"trees":2.1010100841522217},{"profits":12.708084106445312,"profits_derivative":12.091534614562988,"trees":2.141414165496826},{"profits":13.19575309753418,"profits_derivative":12.042073249816895,"trees":2.1818182468414307},{"profits":13.68069076538086,"profits_derivative":11.956103324890137,"trees":2.222222328186035},{"profits":14.16138744354248,"profits_derivative":11.832043647766113,"trees":2.2626261711120605},{"profits":14.636279106140137,"profits_derivative":11.66830825805664,"trees":2.303030252456665},{"profits":15.10372543334961,"profits_derivative":11.463315963745117,"trees":2.3434343338012695},{"profits":15.562030792236328,"profits_derivative":11.21548080444336,"trees":2.383838415145874},{"profits":16.009429931640625,"profits_derivative":10.923226356506348,"trees":2.4242424964904785},{"profits":16.444095611572266,"profits_derivative":10.584964752197266,"trees":2.464646577835083},{"profits":16.864139556884766,"profits_derivative":10.199111938476562,"trees":2.5050504207611084},{"profits":17.26760482788086,"profits_derivative":9.764086723327637,"trees":2.545454502105713},{"profits":17.65247344970703,"profits_derivative":9.27830696105957,"trees":2.5858585834503174},{"profits":18.016660690307617,"profits_derivative":8.740188598632812,"trees":2.626262664794922},{"profits":18.35802459716797,"profits_derivative":8.148149490356445,"trees":2.6666667461395264},{"profits":18.67435073852539,"profits_derivative":7.50060510635376,"trees":2.7070705890655518},{"profits":18.963363647460938,"profits_derivative":6.79597282409668,"trees":2.7474746704101562},{"profits":19.222728729248047,"profits_derivative":6.032668590545654,"trees":2.7878787517547607},{"profits":19.450042724609375,"profits_derivative":5.209111213684082,"trees":2.8282828330993652},{"profits":19.642837524414062,"profits_derivative":4.3237175941467285,"trees":2.8686869144439697},{"profits":19.798580169677734,"profits_derivative":3.3749046325683594,"trees":2.909090995788574},{"profits":19.91468048095703,"profits_derivative":2.3610944747924805,"trees":2.9494948387145996},{"profits":19.988475799560547,"profits_derivative":1.2806897163391113,"trees":2.989898920059204},{"profits":20.017250061035156,"profits_derivative":0.1321239471435547,"trees":3.0303030014038086},{"profits":19.998214721679688,"profits_derivative":-1.0862011909484863,"trees":3.070707082748413},{"profits":19.928516387939453,"profits_derivative":-2.375861167907715,"trees":3.1111111640930176},{"profits":19.80524444580078,"profits_derivative":-3.738431453704834,"trees":3.151515245437622},{"profits":19.62541961669922,"profits_derivative":-5.175499439239502,"trees":3.1919190883636475},{"profits":19.385997772216797,"profits_derivative":-6.688662528991699,"trees":3.232323169708252},{"profits":19.083873748779297,"profits_derivative":-8.279485702514648,"trees":3.2727272510528564},{"profits":18.715879440307617,"profits_derivative":-9.949562072753906,"trees":3.313131332397461},{"profits":18.27878189086914,"profits_derivative":-11.700475692749023,"trees":3.3535354137420654},{"profits":17.769275665283203,"profits_derivative":-13.533799171447754,"trees":3.39393949508667},{"profits":17.184011459350586,"profits_derivative":-15.451114654541016,"trees":3.4343433380126953},{"profits":16.51955223083496,"profits_derivative":-17.454015731811523,"trees":3.4747474193573},{"profits":15.772408485412598,"profits_derivative":-19.544090270996094,"trees":3.5151515007019043},{"profits":14.939033508300781,"profits_derivative":-21.722911834716797,"trees":3.555555582046509},{"profits":14.015803337097168,"profits_derivative":-23.992055892944336,"trees":3.5959596633911133},{"profits":12.999043464660645,"profits_derivative":-26.353118896484375,"trees":3.6363637447357178},{"profits":11.885002136230469,"profits_derivative":-28.80767059326172,"trees":3.676767587661743},{"profits":10.66987419128418,"profits_derivative":-31.35731315612793,"trees":3.7171716690063477},{"profits":9.349775314331055,"profits_derivative":-34.00361633300781,"trees":3.757575750350952},{"profits":7.920779228210449,"profits_derivative":-36.7481689453125,"trees":3.7979798316955566},{"profits":6.37888240814209,"profits_derivative":-39.59254455566406,"trees":3.838383913040161},{"profits":4.720010757446289,"profits_derivative":-42.53834533691406,"trees":3.8787879943847656},{"profits":2.9400548934936523,"profits_derivative":-45.58710861206055,"trees":3.919191837310791},{"profits":1.0348033905029297,"profits_derivative":-48.7404670715332,"trees":3.9595959186553955},{"profits":-1.0,"profits_derivative":-52.0,"trees":4.0}]},"height":320,"layer":[{"encoding":{"x":{"field":"trees","type":"quantitative"},"y":{"field":"profits","type":"quantitative"}},"mark":{"interpolate":"basis","type":"line"}},{"encoding":{"color":{"value":"#ff0000"},"x":{"field":"trees","type":"quantitative"},"y":{"field":"profits_derivative","type":"quantitative"}},"mark":{"interpolate":"basis","type":"line"}}],"title":"Berry Profits","width":480}
+```
+
+```elixir
+defmodule GradFun do
+  import Nx.Defn
+
+  defn my_function(x) do
+    x
+    |> Nx.cos()
+    |> Nx.exp()
+    |> Nx.sum()
+    |> print_expr()
+  end
+
+  defn grad_my_function(x) do
+    grad(x, &my_function/1) |> print_expr()
+  end
+end
+
+GradFun.grad_my_function(Nx.tensor([1.0, 2.0, 3.0]))
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+#Nx.Tensor<
+  f32
+  
+  Nx.Defn.Expr
+  parameter a:0                            f32[3]
+  b = cos a                                f32[3]
+  c = exp b                                f32[3]
+  d = sum c, axes: nil, keep_axes: false   f32
+>
+#Nx.Tensor<
+  f32[3]
+  
+  Nx.Defn.Expr
+  parameter a:0       f32[3]
+  b = cos a           f32[3]
+  c = exp b           f32[3]
+  d = sin a           f32[3]
+  e = negate d        f32[3]
+  f = multiply c, e   f32[3]
+>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+#Nx.Tensor<
+  f32[3]
+  EXLA.Backend<host:0, 0.404730399.4157997072.186838>
+  [-1.444406509399414, -0.5997574925422668, -0.05243729427456856]
+>
+```
+
+## Chapter 4
+
+```elixir
+defmodule CrossEntropy do
+  import Nx.Defn
+
+  defn binary_cross_entropy(y_true, y_pred) do
+    y_true * Nx.log(y_pred) - (1 - y_true) * Nx.log(1 - y_pred)
+  end
+end
+
+for x <- [0.455, 0.333, 0.999, 0.8], do:
+  CrossEntropy.binary_cross_entropy(1, x)
+  |> IO.inspect()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+#Nx.Tensor<
+  f32
+  EXLA.Backend<host:0, 0.404730399.4157997072.186913>
+  -0.7874578237533569
+>
+#Nx.Tensor<
+  f32
+  EXLA.Backend<host:0, 0.404730399.4157997072.186920>
+  -1.0996127128601074
+>
+#Nx.Tensor<
+  f32
+  EXLA.Backend<host:0, 0.404730399.4157997072.186927>
+  -0.0010004874784499407
+>
+#Nx.Tensor<
+  f32
+  EXLA.Backend<host:0, 0.404730399.4157997072.186934>
+  -0.2231435328722
+>
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+[
+  #Nx.Tensor<
+    f32
+    EXLA.Backend<host:0, 0.404730399.4157997072.186913>
+    -0.7874578237533569
+  >,
+  #Nx.Tensor<
+    f32
+    EXLA.Backend<host:0, 0.404730399.4157997072.186920>
+    -1.0996127128601074
+  >,
+  #Nx.Tensor<
+    f32
+    EXLA.Backend<host:0, 0.404730399.4157997072.186927>
+    -0.0010004874784499407
+  >,
+  #Nx.Tensor<
+    f32
+    EXLA.Backend<host:0, 0.404730399.4157997072.186934>
+    -0.2231435328722
+  >
+]
 ```
