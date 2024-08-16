@@ -12,6 +12,8 @@
   in {
     devShells."${system}".default = pkgs.mkShell {
       buildInputs = [
+        pkgs.jujutsu
+
         erlang
         elixir
 

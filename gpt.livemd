@@ -223,7 +223,7 @@ train_batch = get_batch_stream.("train", 4, 8)
 params =
   {init_fn, custom_predict_fn}
   |> Axon.Loop.trainer(custom_loss_fn, Axon.Optimizers.adamw())
-  |> Axon.Loop.run(train_batch, %{}, epochs: 1, iterations: 10000, compiler: EXLA)
+  |> Axon.Loop.run(train_batch, %{}, epochs: 1, iterations: 100, compiler: EXLA)
 ```
 
 ```elixir
@@ -258,3 +258,7 @@ generate_fn.(bigram_model, params, init_seq, max_new_tokens)
 ```
 
 Hmm... we get a lot of repitition. I suspect the issue is with `Nx.argmax`. Need to investigate further!
+
+```elixir
+t = Nx.iota({3, 3}) |> Nx.tril()
+```
