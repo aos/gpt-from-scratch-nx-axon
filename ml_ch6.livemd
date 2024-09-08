@@ -1,0 +1,202 @@
+# Machine Learning in Elixir (Ch 6+)
+
+```elixir
+Mix.install(
+  [
+    {:axon, "~> 0.5"},
+    {:nx, "~> 0.5"},
+    {:explorer, "~> 0.5"},
+    {:kino, "~> 0.8"},
+    {:scholar, "~> 0.3.1"},
+    {:exla, "~> 0.5"},
+    {:benchee, github: "bencheeorg/benchee", override: true},
+    {:table_rex, "~> 3.1.1"},
+    {:scidata, "~> 0.1"},
+    {:stb_image, "~> 0.6"},
+    {:vega_lite, "~> 0.1"},
+    {:kino_vega_lite, "~> 0.1"}
+  ],
+  config: [
+    nx: [
+      default_backend: {EXLA.Backend, []},
+      default_defn_options: [compiler: EXLA]
+    ]
+  ]
+)
+
+```
+
+## Chapter 6
+
+```elixir
+require Explorer.DataFrame, as: DF
+alias VegaLite, as: Vl
+```
+
+### Neural network
+
+```elixir
+defmodule NeuralNetwork do
+  import Nx.Defn
+
+  defn hidden(input, weight, bias) do
+    input
+    |> dense(weight, bias)
+    |> activation()
+  end
+
+  defn output(input, weight, bias) do
+    input
+    |> dense(weight, bias)
+    |> activation()
+  end
+
+  defn predict(input, w1, b1, w2, b2) do
+    input
+    |> hidden(w1, b1)
+    |> output(w2, b2)
+  end
+
+  defn dense(input, weight, bias) do
+    input
+    |> Nx.dot(weight)
+    |> Nx.add(bias)
+  end
+
+  defn activation(input) do
+    Nx.sigmoid(input)
+  end
+end
+```
+
+```elixir
+Application.spec(:nx, :vsn)
+```
+
+```elixir
+key = Nx.Random.key(42)
+{w1, new_key} = Nx.Random.uniform(key)
+{b1, new_key} = Nx.Random.uniform(new_key)
+{w2, new_key} = Nx.Random.uniform(new_key)
+{b2, new_key} = Nx.Random.uniform(new_key)
+
+{input, _new_key} = Nx.Random.uniform(new_key, shape: {})
+
+input
+|> NeuralNetwork.predict(w1, b2, w2, b2)
+```
+
+### Axon
+
+```elixir
+{images, labels} = Scidata.MNIST.download()
+```
+
+```elixir
+{image_data, image_type, image_shape} = images
+{label_data, label_type, label_shape} = labels
+
+images =
+  image_data
+  |> Nx.from_binary(image_type)
+  |> Nx.divide(255)
+  |> Nx.reshape({60000, :auto})
+
+labels =
+  label_data
+  |> Nx.from_binary(label_type)
+  |> Nx.reshape(label_shape)
+  |> Nx.new_axis(-1)
+  |> Nx.equal(Nx.iota({1, 10}))
+```
+
+```elixir
+train_range = 0..49_999//1
+test_range = 50_000..-1//1
+
+train_images = images[train_range]
+train_labels = labels[train_range]
+
+test_images = images[test_range]
+test_labels = labels[test_range]
+```
+
+```elixir
+batch_size = 64
+
+train_data =
+  train_images
+  |> Nx.to_batched(batch_size)
+  |> Stream.zip(Nx.to_batched(train_labels, batch_size))
+
+test_data =
+  test_images
+  |> Nx.to_batched(batch_size)
+  |> Stream.zip(Nx.to_batched(test_labels, batch_size))
+```
+
+### Building the model with Axon
+
+```elixir
+model =
+  Axon.input("images", shape: {nil, 784})
+  |> Axon.dense(128, activation: :relu)
+  |> Axon.dense(10, activation: :softmax)
+```
+
+```elixir
+template = Nx.template({1, 784}, :f32)
+Axon.Display.as_graph(model, template)
+```
+
+```elixir
+Axon.Display.as_table(model, template)
+|> IO.puts()
+```
+
+```elixir
+IO.inspect(model, structs: false)
+```
+
+### Training the model
+
+```elixir
+trained_model_state =
+  model
+  |> Axon.Loop.trainer(:categorical_cross_entropy, :sgd)
+  |> Axon.Loop.metric(:accuracy)
+  |> Axon.Loop.run(train_data, %{}, epochs: 10, compiler: EXLA)
+```
+
+### Evaluating the model
+
+```elixir
+model
+|> Axon.Loop.evaluator()
+|> Axon.Loop.metric(:accuracy)
+|> Axon.Loop.run(test_data, trained_model_state, compiler: EXLA)
+```
+
+### Executing models with Axon
+
+```elixir
+{test_batch, _} = Enum.at(test_data, 0)
+test_image = test_batch[0]
+
+test_image
+|> Nx.reshape({28, 28})
+|> Nx.to_heatmap()
+```
+
+```elixir
+{_, predict_fn} = Axon.build(model, compiler: EXLA)
+
+probabilities =
+  test_image
+  |> Nx.new_axis(0)
+  |> then(&predict_fn.(trained_model_state, &1))
+```
+
+```elixir
+probabilities |> Nx.argmax()
+```
