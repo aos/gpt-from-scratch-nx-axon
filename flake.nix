@@ -20,6 +20,7 @@
         beamPkgs.hex
         beamPkgs.elixir-ls
 
+        pkgs.protobuf
         pkgs.inotifyTools
         pkgs.nodejs
       ];

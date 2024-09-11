@@ -4,7 +4,9 @@
 Mix.install(
   [
     {:axon, "~> 0.5"},
+    {:axon_onnx, github: "mortont/axon_onnx", override: true},
     {:nx, "~> 0.5"},
+    {:polaris, "~> 0.1"},
     {:explorer, "~> 0.5"},
     {:kino, "~> 0.8"},
     {:scholar, "~> 0.3.1"},
@@ -15,23 +17,23 @@ Mix.install(
     {:stb_image, "~> 0.6"},
     {:vega_lite, "~> 0.1"},
     {:kino_vega_lite, "~> 0.1"}
-  ],
-  config: [
-    nx: [
-      default_backend: {EXLA.Backend, []},
-      default_defn_options: [compiler: EXLA]
-    ]
   ]
 )
-
 ```
 
-## Chapter 6
+## Setup v2
 
 ```elixir
+Nx.global_default_backend(EXLA.Backend)
+Nx.Defn.global_default_options(compiler: EXLA)
+
 require Explorer.DataFrame, as: DF
 alias VegaLite, as: Vl
 ```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Chapter 6
 
 ### Neural network
 
@@ -141,6 +143,7 @@ test_data =
 model =
   Axon.input("images", shape: {nil, 784})
   |> Axon.dense(128, activation: :relu)
+  |> Axon.dense(128, activation: :relu)
   |> Axon.dense(10, activation: :softmax)
 ```
 
@@ -199,4 +202,416 @@ probabilities =
 
 ```elixir
 probabilities |> Nx.argmax()
+```
+
+## Chapter 7
+
+### Creating a pipeline
+
+```elixir
+defmodule CatsAndDogs do
+  def pipeline(paths, batch_size, target_height, target_width) do
+    paths
+    |> Enum.shuffle()
+    |> Task.async_stream(&parse_image/1)
+    |> Stream.filter(fn
+      {:ok, {%StbImage{}, _}} -> true
+      _ -> false
+    end)
+    |> Stream.map(&to_tensors(&1, target_height, target_width))
+    |> Stream.chunk_every(batch_size, batch_size, :discard)
+    |> Stream.map(fn chunks ->
+      {img_chunk, label_chunk} = Enum.unzip(chunks)
+      {Nx.stack(img_chunk), Nx.stack(label_chunk)}
+    end)
+  end
+
+  def pipeline_with_aug(paths, batch_size, target_height, target_width) do
+    paths
+    |> Enum.shuffle()
+    |> Task.async_stream(&parse_image/1)
+    |> Stream.filter(fn
+      {:ok, {%StbImage{}, _}} -> true
+      _ -> false
+    end)
+    |> Stream.map(&to_tensors(&1, target_height, target_width))
+    |> Stream.map(&random_flip(&1, :height))
+    |> Stream.map(&random_flip(&1, :width))
+    |> Stream.chunk_every(batch_size, batch_size, :discard)
+    |> Stream.map(fn chunks ->
+      {img_chunk, label_chunk} = Enum.unzip(chunks)
+      {Nx.stack(img_chunk), Nx.stack(label_chunk)}
+    end)
+  end
+
+  defp parse_image(path) do
+    base = Path.basename(path)
+    label = if String.contains?(base, "cat"), do: 0, else: 1
+
+    case StbImage.read_file(path) do
+      {:ok, img} -> {img, label}
+      _error -> :error
+    end
+  end
+
+  defp to_tensors({:ok, {img, label}}, target_height, target_width) do
+    img_tensor =
+      img
+      |> StbImage.resize(target_height, target_width)
+      |> StbImage.to_nx()
+      |> Nx.divide(255)
+
+    label_tensor = Nx.tensor([label])
+
+    {img_tensor, label_tensor}
+  end
+
+  defp random_flip({image, label}, axis) do
+    if :rand.uniform() < 0.5 do
+      {Nx.reverse(image, axes: [axis]), label}
+    else
+      {image, label}
+    end
+  end
+end
+```
+
+```elixir
+batch_size = 128
+target_height = 96
+target_width = 96
+
+{test_paths, train_paths} =
+  Path.wildcard("train/cats_dogs/*.jpg")
+  |> Enum.shuffle()
+  |> Enum.split(1000)
+
+{test_paths, val_paths} = test_paths |> Enum.split(750)
+
+train_pipeline = CatsAndDogs.pipeline_with_aug(
+  train_paths, batch_size, target_height, target_width
+)
+val_pipeline = CatsAndDogs.pipeline(
+  val_paths, batch_size, target_height, target_width
+)
+test_pipeline = CatsAndDogs.pipeline(
+  test_paths, batch_size, target_height, target_width
+)
+
+Enum.take(train_pipeline, 1)
+```
+
+<!-- livebook:{"branch_parent_index":2} -->
+
+## Training the MLP
+
+```elixir
+mlp_model =
+  Axon.input("images", shape: {nil, target_height, target_width, 3})
+  |> Axon.flatten()
+  |> Axon.dense(256, activation: :relu)
+  |> Axon.dense(128, activation: :relu)
+  |> Axon.dense(1, activation: :sigmoid)
+```
+
+```elixir
+mlp_trained_model_state =
+  mlp_model
+  |> Axon.Loop.trainer(:binary_cross_entropy, :adam)
+  |> Axon.Loop.metric(:accuracy)
+  |> Axon.Loop.run(train_pipeline, %{}, epochs: 5, compiler: EXLA)
+```
+
+```elixir
+mlp_model
+|> Axon.Loop.evaluator()
+|> Axon.Loop.metric(:accuracy)
+|> Axon.Loop.run(test_pipeline, mlp_trained_model_state, compiler: EXLA)
+```
+
+<!-- livebook:{"branch_parent_index":2} -->
+
+## Convolutional Networks
+
+```elixir
+path = "train/cats_dogs/dog.5.jpg"
+img =
+  path
+  |> StbImage.read_file!()
+  |> StbImage.to_nx()
+  |> Nx.transpose(axes: [:channels, :height, :width])
+  |> Nx.new_axis(0)
+
+kernel = Nx.tensor([
+  [-1, 0, 1],
+  [-1, 0, 1],
+  [-1, 0, 1]
+])
+kernel = kernel |> Nx.reshape({1, 1, 3, 3}) |> Nx.broadcast({3, 3, 3, 3})
+
+img
+|> Nx.conv(kernel)
+|> Nx.as_type({:u, 8})
+|> Nx.squeeze(axes: [0])
+|> Nx.transpose(axes: [:height, :width, :channels])
+|> Kino.Image.new()
+```
+
+### Implementing CNNs
+
+```elixir
+cnn_model =
+  Axon.input("images", shape: {nil, 96, 96, 3})
+  |> Axon.conv(32, kernel_size: {3, 3}, activation: :relu, padding: :same)
+  |> Axon.batch_norm()
+  |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2])
+  |> Axon.conv(64, kernel_size: {3, 3}, activation: :relu, padding: :same)
+  |> Axon.batch_norm()
+  |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2])
+  |> Axon.conv(128, kernel_size: {3, 3}, activation: :relu, padding: :same)
+  |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2])
+  |> Axon.flatten()
+  |> Axon.dense(128, activation: :relu)
+  |> Axon.dropout(rate: 0.5)
+  |> Axon.dense(1, activation: :sigmoid)
+```
+
+```elixir
+template = Nx.template({1, 96, 96, 3}, :f32)
+Axon.Display.as_graph(cnn_model, template)
+```
+
+```elixir
+cnn_trained_model_state =
+  cnn_model
+  |> Axon.Loop.trainer(:binary_cross_entropy, Polaris.Optimizers.adam(learning_rate: 1.0e-3))
+  |> Axon.Loop.metric(:accuracy)
+  |> Axon.Loop.validate(cnn_model, val_pipeline)
+  |> Axon.Loop.early_stop("validation_loss", mode: :min)
+  |> Axon.Loop.run(train_pipeline, %{}, epochs: 100, compiler: EXLA)
+```
+
+```elixir
+cnn_model
+|> Axon.Loop.evaluator()
+|> Axon.Loop.metric(:accuracy)
+|> Axon.Loop.run(test_pipeline, cnn_trained_model_state, compiler: EXLA)
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Chapter 8
+
+```elixir
+defmodule CatsAndDogs do
+  def pipeline(paths, batch_size, target_height, target_width) do
+    paths
+    |> Enum.shuffle()
+    |> Task.async_stream(&parse_image/1)
+    |> Stream.filter(fn
+      {:ok, {%StbImage{}, _}} -> true
+      _ -> false
+    end)
+    |> Stream.map(&to_tensors(&1, target_height, target_width))
+    |> Stream.chunk_every(batch_size, batch_size, :discard)
+    |> Stream.map(fn chunks ->
+      {img_chunk, label_chunk} = Enum.unzip(chunks)
+      {Nx.stack(img_chunk), Nx.stack(label_chunk)}
+    end)
+  end
+  
+  def pipeline_with_augs(paths, batch_size, target_height, target_width) do
+    paths
+    |> Enum.shuffle()
+    |> Task.async_stream(&parse_image/1)
+    |> Stream.filter(fn
+      {:ok, {%StbImage{}, _}} -> true
+      _ -> false
+    end)
+    |> Stream.map(&to_tensors(&1, target_height, target_width))
+    |> Stream.map(&random_flip(&1, :height))
+    |> Stream.map(&random_flip(&1, :width))
+    |> Stream.chunk_every(batch_size, batch_size, :discard)
+    |> Stream.map(fn chunks ->
+      {img_chunk, label_chunk} = Enum.unzip(chunks)
+      {Nx.stack(img_chunk), Nx.stack(label_chunk)}
+    end)
+  end
+
+  defp random_flip({image, label}, axis) do
+    if :rand.uniform() < 0.5 do
+      {Nx.reverse(image, axes: [axis]), label}
+    else
+      {image, label}
+    end
+  end
+
+  defp parse_image(path) do
+    base = Path.basename(path)
+    label = if String.contains?(base, "cat"), do: 0, else: 1
+
+    case StbImage.read_file(path) do
+      {:ok, img} -> {img, label}
+      _error -> :error
+    end
+  end
+
+  defp to_tensors({:ok, {img, label}}, target_height, target_width) do
+    img_tensor =
+      img
+      |> StbImage.resize(target_height, target_width)
+      |> StbImage.to_nx()
+      |> Nx.divide(255)
+      |> Nx.transpose(axes: [:channels, :height, :width])
+
+    label_tensor = Nx.tensor([label])
+    {img_tensor, label_tensor}
+  end
+end
+```
+
+```elixir
+batch_size = 32
+target_height = 160
+target_width = 160
+
+{test_paths, train_paths} =
+  Path.wildcard("train/cats_dogs/*.jpg")
+  |> Enum.shuffle()
+  |> Enum.split(1000)
+
+{test_paths, val_paths} = test_paths |> Enum.split(750)
+
+train_pipeline =
+  CatsAndDogs.pipeline_with_augs(
+    train_paths,
+    batch_size,
+    target_height,
+    target_width
+  )
+
+test_pipeline =
+  CatsAndDogs.pipeline(
+    test_paths,
+    batch_size,
+    target_height,
+    target_width
+  )
+
+val_pipeline =
+  CatsAndDogs.pipeline(
+    val_paths,
+    batch_size,
+    target_height,
+    target_width
+  )
+
+Enum.take(train_pipeline, 1)
+```
+
+```elixir
+{cnn_base, cnn_base_params} = AxonOnnx.import(
+  "train/mobilenetv2-7.onnx", batch_size: batch_size
+)
+```
+
+```elixir
+input_template = Nx.template({1, 3, target_height, target_width}, :f32)
+Axon.Display.as_graph(cnn_base, input_template)
+```
+
+```elixir
+### Extract the original classification head
+{_popped, cnn_base} = cnn_base |> Axon.pop_node()
+{_popped, cnn_base} = cnn_base |> Axon.pop_node()
+```
+
+Wrap convolutional base into its own namespace
+
+```elixir
+cnn_base = cnn_base |> Axon.namespace("feature_extractor")
+```
+
+Freeze the convolutional base so that we don't use it for training
+
+```elixir
+cnn_base = cnn_base |> Axon.freeze()
+```
+
+Flatten the features or use a global pooling layer. Also add some regularization via dropout
+
+```elixir
+model =
+  cnn_base
+  |> Axon.global_avg_pool(channels: :first)
+  |> Axon.dropout(rate: 0.2)
+  |> Axon.dense(1)
+```
+
+Create training loop
+
+```elixir
+loss = &Axon.Losses.binary_cross_entropy(&1, &2,
+  reduction: :mean,
+  from_logits: true
+)
+optimizer = Polaris.Optimizers.adam(learning_rate: 1.0e-4)
+
+trained_model_state =
+  model
+  |> Axon.Loop.trainer(loss, optimizer)
+  |> Axon.Loop.metric(:accuracy)
+  |> Axon.Loop.validate(model, val_pipeline)
+  |> Axon.Loop.early_stop("validation_loss", mode: :min, patience: 5)
+  |> Axon.Loop.run(
+    train_pipeline,
+    %{"feature_extractor" => cnn_base_params},
+    epochs: 1,
+    compiler: EXLA
+  )
+```
+
+```elixir
+eval_model = model |> Axon.sigmoid()
+
+eval_model
+|> Axon.Loop.evaluator()
+|> Axon.Loop.metric(:accuracy)
+|> Axon.Loop.run(test_pipeline, trained_model_state, compiler: EXLA)
+```
+
+### Fine-tuning
+
+```elixir
+model = model |> Axon.unfreeze(up: 50)
+```
+
+```elixir
+loss = &Axon.Losses.binary_cross_entropy(&1, &2,
+  reduction: :mean,
+  from_logits: true)
+
+optimizer = Polaris.Optimizers.rmsprop(learning_rate: 1.0e-5)
+
+trained_model_state =
+  model
+  |> Axon.Loop.trainer(loss, optimizer)
+  |> Axon.Loop.metric(:accuracy)
+  |> Axon.Loop.validate(model, val_pipeline)
+  |> Axon.Loop.early_stop("validation_loss", mode: :min, patience: 5)
+  |> Axon.Loop.run(
+    train_pipeline,
+    trained_model_state,
+    epochs: 1,
+    compiler: EXLA
+  )
+```
+
+```elixir
+eval_model = model |> Axon.sigmoid()
+
+eval_model
+|> Axon.Loop.evaluator()
+|> Axon.Loop.metric(:accuracy)
+|> Axon.Loop.run(test_pipeline, trained_model_state, compiler: EXLA)
 ```
