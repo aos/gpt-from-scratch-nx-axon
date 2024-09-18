@@ -17,6 +17,21 @@ Mix.install(
     {:stb_image, "~> 0.6"},
     {:vega_lite, "~> 0.1"},
     {:kino_vega_lite, "~> 0.1"}
+  ],
+  config: [
+    nx: [
+      default_backend: {EXLA.Backend, client: :cuda},
+      default_defn_options: [compiler: EXLA, client: :cuda]
+    ],
+    exla: [
+      clients: [
+        cuda: [platform: :cuda, preallocate: false],
+        host: [platform: :host],
+      ]
+    ]
+  ],
+  system_env: [
+    XLA_TARGET: "cuda120",
   ]
 )
 ```
