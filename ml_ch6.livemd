@@ -25,8 +25,7 @@ Mix.install(
     ],
     exla: [
       clients: [
-        cuda: [platform: :cuda, preallocate: false],
-        host: [platform: :host],
+        cuda: [platform: :cuda, memory_fraction: 0.25]
       ]
     ]
   ],
@@ -39,9 +38,6 @@ Mix.install(
 ## Setup v2
 
 ```elixir
-Nx.global_default_backend(EXLA.Backend)
-Nx.Defn.global_default_options(compiler: EXLA)
-
 require Explorer.DataFrame, as: DF
 alias VegaLite, as: Vl
 ```
@@ -84,10 +80,6 @@ defmodule NeuralNetwork do
     Nx.sigmoid(input)
   end
 end
-```
-
-```elixir
-Application.spec(:nx, :vsn)
 ```
 
 ```elixir
