@@ -1,8 +1,12 @@
-## GPT in Elixir using Nx/Axon
+## Elixir ML
 
-This is a follow-along of Andrej Karpathy's [Let's build GPT: from scratch, in
+This repository holds 2 things:
+
+- This is a follow-along of Andrej Karpathy's [Let's build GPT: from scratch, in
 code, spelled out.](https://www.youtube.com/watch?v=kCc8FmEb1nY) Jupyter
 Notebook using Elixir/Livebook/Axon/Nx.
+
+- Follow-along of Machine Learning in Elixir book
 
 This is still a work in progress and I've done my best to label the sections in
 accordance with the Youtube video.
